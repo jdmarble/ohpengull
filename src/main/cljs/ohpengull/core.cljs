@@ -32,18 +32,28 @@
    }")
 
 (def input
-  {:accessors {"my-position-accessor" {:buffer-view "my-array-buffer-view"
+  {:accessors {"my-position-accessor" {:buffer-view "my-array-view"
                                        :components-per-vertex 3
                                        :type data-type/float}
-               "my-index-accessor" {:buffer-view "my-element-array-buffer-view"
+               "my-index-accessor" {:buffer-view "my-element-view"
                                     :count 3
                                     :type data-type/unsigned-short
                                     :offset 0}}
-   :buffer-views {"my-array-buffer-view" (ta/float32 [0.5 -0.5 0.0
-                                                      0.0 0.5 0.0
-                                                      -0.5 -0.5 0.0])
-                  "my-element-array-buffer-view" (ta/unsigned-int16 [0 1 2])}
-   :programs {"my-program" {:attributes nil                 ;TODO
+   :buffers {"my-array-buffer" {:uri [0.5 -0.5 0.0
+                                      0.0 0.5 0.0
+                                      -0.5 -0.5 0.0]
+                                :type ta/float32}
+             "my-element-buffer" {:uri [0 1 2]
+                                  :type ta/unsigned-int16}}
+   :buffer-views {"my-array-view" {:buffer "my-array-buffer"
+                                   :byteOffset 0
+                                   :byteLength 36
+                                   :target buffer-object/array-buffer}
+                  "my-element-view" {:buffer "my-element-buffer"
+                                     :byteOffset 0
+                                     :byteLength 6
+                                     :target buffer-object/element-array-buffer}}
+   :programs {"my-program" {:attributes ["vertex_position"]
                             :fragment-shader "my-fragment-shader"
                             :vertex-shader "my-vertex-shader"}}
    :shaders {"my-vertex-shader" {:type shader/vertex-shader
@@ -56,7 +66,8 @@
          (atom {:last-input {}
                 :programs {}
                 :shaders {}
-                :draws []}))
+                :buffers {}
+                :buffer-views {}}))
 
 (defn- load-shader! [gl {:keys [type uri]}]
   ;TODO dereference URI instead of using URI as source
@@ -73,36 +84,56 @@
 (defn- load-programs! [gl shaders descs]
   (map-vals descs #(load-program! gl shaders %)))
 
-(defn- make-draw-calls! [gl programs buffer-views accessors]
-  (let [program (get programs "my-program")
-        vertex-buffer (buffers/create-buffer gl (get buffer-views "my-array-buffer-view")
-                                             buffer-object/array-buffer
-                                             buffer-object/static-draw)
-        element-buffer (buffers/create-buffer gl (get buffer-views "my-element-array-buffer-view")
-                                              buffer-object/element-array-buffer
-                                              buffer-object/static-draw)]
-    [{:shader program
-      :draw-mode draw-mode/triangles
-      :count 3
-      :attributes [(assoc (get accessors "my-position-accessor")
-                     :buffer vertex-buffer
-                     :location (shaders/get-attrib-location gl program "vertex_position"))]
-      :element-array (assoc (get accessors "my-index-accessor")
-                       :buffer element-buffer)}]))
+(defn- load-buffer! [{:keys [uri type]}]
+  (type uri))
+
+(defn- load-buffers! [descs]
+  (map-vals descs #(load-buffer! %)))
+
+(defn- load-buffer-view! [gl buffers {:keys [buffer byteOffset byteLength target]}]
+  (let [view (js/DataView. (.-buffer (get buffers buffer)) byteOffset byteLength)]
+    (buffers/create-buffer gl view target buffer-object/static-draw)))
+
+(defn- load-buffer-views! [gl buffers descs]
+  (map-vals descs #(load-buffer-view! gl buffers %)))
+
+(defn- assoc-attribute [gl render-state program attribute-name accessor-name]
+  (let [accessor (get-in render-state [:last-input :accessors accessor-name])
+        buffer-view (get-in render-state [:buffer-views (:buffer-view accessor)])]
+    (assoc accessor
+      :buffer buffer-view
+      :location (shaders/get-attrib-location gl program attribute-name))))
+
+(defn- assoc-element-array [render-state accessor-name]
+  (let [accessor (get-in render-state [:last-input :accessors accessor-name])
+        buffer-view (get-in render-state [:buffer-views (:buffer-view accessor)])]
+    (assoc accessor
+      :buffer buffer-view)))
 
 (defn update-render-state! [old-state gl input]
   (if (= (:last-input old-state) input)
     old-state
     ; TODO: Unload removed shaders, programs, and buffers
     (let [shaders (load-shaders! gl (:shaders input))
-          programs (load-programs! gl shaders (:programs input))]
+          programs (load-programs! gl shaders (:programs input))
+          buffers (load-buffers! (:buffers input))
+          buffer-views (load-buffer-views! gl buffers (:buffer-views input))]
       {:last-input input
        :shaders shaders
        :programs programs
-       :draws (make-draw-calls! gl programs (:buffer-views input) (:accessors input))})))
+       :buffers buffers
+       :buffer-views buffer-views})))
+
+(defn- make-draw-calls [gl render-state]
+  (let [program (get-in render-state [:programs "my-program"])]
+    [{:shader program
+      :draw-mode draw-mode/triangles
+      :count 3
+      :attributes [(assoc-attribute gl render-state program "vertex_position" "my-position-accessor")]
+      :element-array (assoc-element-array render-state "my-index-accessor")}]))
 
 (let [gl (context/get-context (sel1 :#glcanvas))]
   (swap! render-state update-render-state! gl input)        ;TODO swap! function must not have side-effects
   (buffers/clear-color-buffer gl 0 0 0 1)
-  (doseq [draw-args (:draws @render-state)]
+  (doseq [draw-args (make-draw-calls gl @render-state)]
     (mapply buffers/draw! gl draw-args)))
