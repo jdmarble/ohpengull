@@ -53,6 +53,10 @@
                                      :byteOffset 0
                                      :byteLength 6
                                      :target buffer-object/element-array-buffer}}
+   :meshes {"my-mesh" {:primitives [{:attributes {"vertex_position" "my-position-accessor"}
+                                     :indices "my-index-accessor"
+                                     :material nil
+                                     :primitive draw-mode/triangles}]}}
    :programs {"my-program" {:attributes ["vertex_position"]
                             :fragment-shader "my-fragment-shader"
                             :vertex-shader "my-vertex-shader"}}
@@ -125,12 +129,15 @@
        :buffer-views buffer-views})))
 
 (defn- make-draw-calls [gl render-state]
-  (let [program (get-in render-state [:programs "my-program"])]
-    [{:shader program
-      :draw-mode draw-mode/triangles
-      :count 3
-      :attributes [(assoc-attribute gl render-state program "vertex_position" "my-position-accessor")]
-      :element-array (assoc-element-array render-state "my-index-accessor")}]))
+  (for [mesh (vals (get-in render-state [:last-input :meshes]))
+        prim (:primitives mesh)
+        :let [program (get-in render-state [:programs "my-program"])]]
+    {:shader program
+     :draw-mode (:primitive prim)
+     :count (get-in render-state [:last-input :accessors (:indices prim) :count])
+     :attributes (for [[attribute-name accessor-name] (:attributes prim)]
+                   (assoc-attribute gl render-state program attribute-name accessor-name))
+     :element-array (assoc-element-array render-state (:indices prim))}))
 
 (let [gl (context/get-context (sel1 :#glcanvas))]
   (swap! render-state update-render-state! gl input)        ;TODO swap! function must not have side-effects
