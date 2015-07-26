@@ -6,33 +6,28 @@
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojurescript "0.0-2850"]
-                 [figwheel "0.2.5-SNAPSHOT"]
-                 [cljs-webgl "0.1.5-SNAPSHOT"]
-                 [prismatic/dommy "1.0.0"]]
+                 [cljs-webgl "0.1.5-SNAPSHOT"]]
 
-  :plugins [[lein-cljsbuild "1.0.4"]
-            [lein-figwheel "0.2.5-SNAPSHOT"]]
+  :plugins [[lein-cljsbuild "1.0.4"]]
 
-  :source-paths ["src"]
+  :profiles {:dev {:dependencies [[figwheel "0.2.5-SNAPSHOT"]
+                                  [prismatic/dommy "1.0.0"]]
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled"]
-  
-  :cljsbuild {
-    :builds [{:id "dev"
-              :source-paths ["src" "dev_src"]
-              :compiler {:output-to "resources/public/js/compiled/ohpengull.js"
-                         :output-dir "resources/public/js/compiled/out"
-                         :optimizations :none
-                         :main ohpengull.dev
-                         :asset-path "js/compiled/out"
-                         :source-map true
-                         :source-map-timestamp true
-                         :cache-analysis true }}
-             {:id "min"
-              :source-paths ["src"]
-              :compiler {:output-to "resources/public/js/compiled/ohpengull.js"
-                         :main ohpengull.core
-                         :optimizations :advanced
-                         :pretty-print false}}]}
+                   :plugins [[lein-figwheel "0.2.5-SNAPSHOT"]]
 
-  :figwheel {:css-dirs ["resources/public/css"]})
+                   :resource-paths ["src/dev/resources", "target/dev/resources"]
+
+                   :cljsbuild {
+                               :builds [{:id "dev"
+                                         :source-paths ["src/main/cljs" "src/dev/cljs"]
+                                         :compiler {:output-to "target/dev/resources/public/js/compiled/ohpengull.js"
+                                                    :output-dir "target/dev/resources/public/js/compiled/out"
+                                                    :optimizations :none
+                                                    :main ohpengull.dev
+                                                    :asset-path "js/compiled/out"
+                                                    :source-map true
+                                                    :source-map-timestamp true
+                                                    :cache-analysis true }}]}
+
+                   :figwheel {:css-dirs ["src/dev/resources/public/css"]
+                              :server-logfile "target/figwheel.log"}}})
