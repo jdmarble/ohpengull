@@ -53,13 +53,19 @@
                                      :byteOffset 0
                                      :byteLength 6
                                      :target buffer-object/element-array-buffer}}
-   :meshes {"my-mesh" {:primitives [{:attributes {"vertex_position" "my-position-accessor"}
+   :materials {"my-material" {:instance-technique {:technique "my-technique"}}}
+   :meshes {"my-mesh" {:primitives [{:attributes {:POSITION "my-position-accessor"}
                                      :indices "my-index-accessor"
-                                     :material nil
+                                     :material "my-material"
                                      :primitive draw-mode/triangles}]}}
    :programs {"my-program" {:attributes ["vertex_position"]
                             :fragment-shader "my-fragment-shader"
                             :vertex-shader "my-vertex-shader"}}
+   :techniques {"my-technique" {:parameters {"position" {:semantic :POSITION
+                                                         :type 35665 #_(FLOAT_VEC3)}}
+                                :pass "my-pass"
+                                :passes {"my-pass" {:instance-program {:attributes {"vertex_position" "position"}
+                                                                       :program "my-program"}}}}}
    :shaders {"my-vertex-shader" {:type shader/vertex-shader
                                  :uri my-vertex-shader-source}
              "my-fragment-shader" {:type shader/fragment-shader
@@ -131,11 +137,19 @@
 (defn- make-draw-calls [gl render-state]
   (for [mesh (vals (get-in render-state [:last-input :meshes]))
         prim (:primitives mesh)
-        :let [program (get-in render-state [:programs "my-program"])]]
+        :let [material (get-in render-state [:last-input :materials (:material prim)])
+              technique-name (get-in material [:instance-technique :technique])
+              technique (get-in render-state [:last-input :techniques technique-name])
+              pass (get-in technique [:passes (:pass technique)])
+              program-name (get-in pass [:instance-program :program])
+              program (get-in render-state [:programs program-name])
+              attributes (get-in pass [:instance-program :attributes])]]
     {:shader program
      :draw-mode (:primitive prim)
      :count (get-in render-state [:last-input :accessors (:indices prim) :count])
-     :attributes (for [[attribute-name accessor-name] (:attributes prim)]
+     :attributes (for [[attribute-name parameter-name] attributes
+                       :let [semantic (get-in technique [:parameters parameter-name :semantic])
+                             accessor-name (get-in prim [:attributes semantic])]]
                    (assoc-attribute gl render-state program attribute-name accessor-name))
      :element-array (assoc-element-array render-state (:indices prim))}))
 
