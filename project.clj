@@ -10,8 +10,7 @@
 
   :plugins [[lein-cljsbuild "1.0.4"]]
 
-  :profiles {:dev {:dependencies [[figwheel "0.2.5-SNAPSHOT"]
-                                  [prismatic/dommy "1.0.0"]]
+  :profiles {:dev {:dependencies [[figwheel "0.2.5-SNAPSHOT"]]
 
                    :plugins [[lein-figwheel "0.2.5-SNAPSHOT"]]
 
