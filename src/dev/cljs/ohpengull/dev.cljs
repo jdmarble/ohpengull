@@ -8,17 +8,6 @@
     [ohpengull.core :as ohpengull]
     [figwheel.client :as fw]))
 
-(def my-vertex-shader-source
-  "attribute vec3 vertex_position;
-   void main() {
-     gl_Position = vec4(vertex_position, 1);
-   }")
-
-(def my-fragment-shader-source
-  "void main() {
-     gl_FragColor = vec4(1, 1, 1, 0);
-   }")
-
 (def my-gltf
   {:accessors {"my-position-accessor" {:buffer-view "my-array-view"
                                        :components-per-vertex 3
@@ -55,12 +44,14 @@
                                 :passes {"my-pass" {:instance-program {:attributes {"vertex_position" "position"}
                                                                        :program "my-program"}}}}}
    :shaders {"my-vertex-shader" {:type shader/vertex-shader
-                                 :uri my-vertex-shader-source}
+                                 :uri "my-VS.glsl"}
              "my-fragment-shader" {:type shader/fragment-shader
-                                   :uri my-fragment-shader-source}}
+                                   :uri "my-FS.glsl"}}
    })
 
 (defn my-render []
   (ohpengull/render my-gltf (js/document.getElementById "glcanvas")))
 
 (fw/start {:on-jsload my-render})
+
+(my-render)
