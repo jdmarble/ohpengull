@@ -1,25 +1,32 @@
 (ns ohpengull.dev
   (:require
+    [cljs-webgl.buffers :as buffers]
+    [cljs-webgl.context :as context]
     [cljs-webgl.constants.buffer-object :as buffer-object]
     [cljs-webgl.constants.draw-mode :as draw-mode]
     [cljs-webgl.constants.data-type :as data-type]
     [cljs-webgl.constants.shader :as shader]
+    [cljs-webgl.shaders :as shaders]
     [cljs-webgl.typed-arrays :as ta]
-    [ohpengull.core :as ohpengull]
+    [ohpengull.draw :as draw]
+    [plumbing.graph :as graph]
     [figwheel.client :as fw]))
 
 (def my-gltf
   {:accessors {"my-position-accessor" {:buffer-view "my-array-view"
-                                       :components-per-vertex 3
-                                       :type data-type/float}
+                                       :byte-offset 0
+                                       :component-type data-type/float
+                                       :count 3
+                                       :type :vec3}
                "my-index-accessor" {:buffer-view "my-element-view"
+                                    :byte-offset 0
+                                    :component-type data-type/unsigned-short
                                     :count 3
-                                    :type data-type/unsigned-short
-                                    :offset 0}}
-   :buffers {"my-array-buffer" {:uri [0.5 -0.5 0.0
-                                      0.0 0.5 0.0
-                                      -0.5 -0.5 0.0]
-                                :type ta/float32}
+                                    :type :scalar}}
+   :buffers {"my-buffer" {:uri [0.5 -0.5 0.0
+                                0.0 0.5 0.0
+                                -0.5 -0.5 0.0]
+                          :type ta/float32}
              "my-element-buffer" {:uri [0 1 2]
                                   :type ta/unsigned-int16}}
    :buffer-views {"my-array-view" {:buffer "my-array-buffer"
@@ -39,7 +46,7 @@
                             :fragment-shader "my-fragment-shader"
                             :vertex-shader "my-vertex-shader"}}
    :techniques {"my-technique" {:parameters {"position" {:semantic :POSITION
-                                                         :type 35665 #_data-type/float-vec3}}
+                                                         :type :vec3}}
                                 :pass "my-pass"
                                 :passes {"my-pass" {:instance-program {:attributes {"vertex_position" "position"}
                                                                        :program "my-program"}}}}}
@@ -49,8 +56,33 @@
                                    :uri "my-FS.glsl"}}
    })
 
+(def gl (context/get-context (.getElementById js/document "canvas")))
+
+(defn my-params []
+  {:loaded-programs {"my-program" {:attribute-locations {"vertex_position" 0}
+                                   :gl-program
+                                   (shaders/create-program gl
+                                                           (shaders/create-shader gl shader/vertex-shader
+                                                                                  "attribute vec3 vertex_position;
+                                                                                  void main() {gl_Position = vec4(vertex_position, 1);}")
+                                                           (shaders/create-shader gl shader/fragment-shader
+                                                                                  "void main() {gl_FragColor = vec4(1, 0, 0, 1);}"))}}
+   :gl-buffers {"my-array-view" (buffers/create-buffer gl (ta/float32 [1.0 1.0 0.0
+                                                                       -1.0 1.0 0.0
+                                                                       1.0 -1.0 0.0])
+                                                       buffer-object/array-buffer
+                                                       buffer-object/static-draw)
+                "my-element-view" (buffers/create-buffer gl (ta/unsigned-int16 [0 1 2])
+                                                         buffer-object/element-array-buffer
+                                                         buffer-object/static-draw)}
+   :gltf my-gltf})
+
 (defn my-render []
-  (ohpengull/render my-gltf (js/document.getElementById "glcanvas")))
+  (let [calc (graph/compile {:draw-calls draw/make-draw-calls})
+        result (calc (my-params))]
+    (draw/execute-draw-calls!
+      (assoc result
+        :draw! (partial cljs-webgl.buffers/draw! gl)))))
 
 (fw/start {:on-jsload my-render})
 
