@@ -7,8 +7,8 @@
     [ohpengull.util :refer [mapply inline-in]]
     [ohpengull.schema.common :as c]))
 
-(defnk make-draw-calls [loaded-programs :- {s/Str {:gl-program webgl/Program
-                                                   :attribute-locations {s/Str s/Int}}}
+(defnk make-draw-calls [programs :- {s/Str {:program webgl/Program
+                                            :attribute-locations {s/Str s/Int}}}
                         gl-buffers :- {s/Str webgl/Buffer}
                         [:gltf meshes accessors materials techniques] :- gltf/Root]
   (for [mesh (vals meshes)
@@ -17,15 +17,15 @@
               instance-technique (:instance-technique (get materials (:material primitive)))
               technique (get techniques (:technique instance-technique))
               instance-program (get-in technique [:passes (:pass technique) :instance-program])
-              loaded-program (get loaded-programs (:program instance-program))]]
-    {:shader (:gl-program loaded-program)
+              program (get programs (:program instance-program))]]
+    {:shader (:program program)
      :draw-mode (:primitive primitive)
      :count (:count element-accessor)
      :attributes (for [[attribute-name parameter-name] (:attributes instance-program)
                        :let [semantic (get-in technique [:parameters parameter-name :semantic])
                              accessor (get accessors (get-in primitive [:attributes semantic]))]]
                    {:buffer (get gl-buffers (:buffer-view accessor))
-                    :location (get-in loaded-program [:attribute-locations attribute-name])
+                    :location (get-in program [:attribute-locations attribute-name])
                     :components-per-vertex (get gltf/components-per-vertex (:type accessor))
                     :type (:component-type accessor)})
      :element-array {:buffer (get gl-buffers (:buffer-view element-accessor))
@@ -54,6 +54,5 @@
   [draw! :- c/Function
    draw-calls :- [DrawCall]]
   (doseq [draw-call draw-calls]
-    (js/console.log "draw! " (pr-str draw-call))
     (mapply draw! draw-call)))
 

@@ -24,6 +24,9 @@
           draw-mode/triangle-strip
           draw-mode/triangle-fan))
 
+(def Context
+  s/Any)
+
 (def ShaderType
   (s/enum shader/fragment-shader
           shader/vertex-shader))
@@ -36,4 +39,7 @@
   s/Any)
 
 (def Program
+  s/Any)
+
+(def Shader
   s/Any)

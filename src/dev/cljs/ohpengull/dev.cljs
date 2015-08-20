@@ -9,6 +9,7 @@
     [cljs-webgl.shaders :as shaders]
     [cljs-webgl.typed-arrays :as ta]
     [ohpengull.draw :as draw]
+    [ohpengull.load :as load]
     [plumbing.graph :as graph]
     [figwheel.client :as fw]))
 
@@ -59,14 +60,10 @@
 (def gl (context/get-context (.getElementById js/document "canvas")))
 
 (defn my-params []
-  {:loaded-programs {"my-program" {:attribute-locations {"vertex_position" 0}
-                                   :gl-program
-                                   (shaders/create-program gl
-                                                           (shaders/create-shader gl shader/vertex-shader
-                                                                                  "attribute vec3 vertex_position;
-                                                                                  void main() {gl_Position = vec4(vertex_position, 1);}")
-                                                           (shaders/create-shader gl shader/fragment-shader
-                                                                                  "void main() {gl_FragColor = vec4(1, 0, 0, 1);}"))}}
+  {:shader-sources {"my-VS.glsl" "attribute vec3 vertex_position;
+                                  void main() {gl_Position = vec4(vertex_position, 1);}"
+                    "my-FS.glsl" "void main() {gl_FragColor = vec4(1, 0, 0, 1);}"}
+   :gl gl
    :gl-buffers {"my-array-view" (buffers/create-buffer gl (ta/float32 [1.0 1.0 0.0
                                                                        -1.0 1.0 0.0
                                                                        1.0 -1.0 0.0])
@@ -78,8 +75,11 @@
    :gltf my-gltf})
 
 (defn my-render []
-  (let [calc (graph/compile {:draw-calls draw/make-draw-calls})
+  (let [calc (graph/compile {:shaders load/load-shaders
+                             :programs load/load-programs
+                             :draw-calls draw/make-draw-calls})
         result (calc (my-params))]
+    (js/console.log "result -> " (pr-str result))
     (draw/execute-draw-calls!
       (assoc result
         :draw! (partial cljs-webgl.buffers/draw! gl)))))
