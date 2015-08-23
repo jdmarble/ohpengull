@@ -1,15 +1,14 @@
 (ns ohpengull.dev
   (:require
-    [cljs-webgl.buffers :as buffers]
     [cljs-webgl.context :as context]
     [cljs-webgl.constants.buffer-object :as buffer-object]
     [cljs-webgl.constants.draw-mode :as draw-mode]
     [cljs-webgl.constants.data-type :as data-type]
     [cljs-webgl.constants.shader :as shader]
-    [cljs-webgl.shaders :as shaders]
     [cljs-webgl.typed-arrays :as ta]
-    [ohpengull.draw :as draw]
-    [ohpengull.load :as load]
+    [ohpengull.buffers]
+    [ohpengull.draw]
+    [ohpengull.programs]
     [plumbing.graph :as graph]
     [figwheel.client :as fw]))
 
@@ -64,23 +63,20 @@
                                   void main() {gl_Position = vec4(vertex_position, 1);}"
                     "my-FS.glsl" "void main() {gl_FragColor = vec4(1, 0, 0, 1);}"}
    :gl gl
-   :gl-buffers {"my-array-view" (buffers/create-buffer gl (ta/float32 [1.0 1.0 0.0
-                                                                       -1.0 1.0 0.0
-                                                                       1.0 -1.0 0.0])
-                                                       buffer-object/array-buffer
-                                                       buffer-object/static-draw)
-                "my-element-view" (buffers/create-buffer gl (ta/unsigned-int16 [0 1 2])
-                                                         buffer-object/element-array-buffer
-                                                         buffer-object/static-draw)}
+   :buffers {"my-array-buffer" (.-buffer (ta/float32 [1.0 1.0 0.0
+                                                      -1.0 1.0 0.0
+                                                      1.0 -1.0 0.0]))
+             "my-element-buffer" (.-buffer (ta/unsigned-int16 [0 1 2]))}
    :gltf my-gltf})
 
 (defn my-render []
-  (let [calc (graph/compile {:shaders load/load-shaders
-                             :programs load/load-programs
-                             :draw-calls draw/make-draw-calls})
+  (let [calc (graph/compile {:buffer-views ohpengull.buffers/create-buffer-views
+                             :shaders ohpengull.programs/compile-shaders
+                             :programs ohpengull.programs/link-programs
+                             :draw-calls ohpengull.draw/make-draw-calls})
         result (calc (my-params))]
     (js/console.log "result -> " (pr-str result))
-    (draw/execute-draw-calls!
+    (ohpengull.draw/execute-draw-calls!
       (assoc result
         :draw! (partial cljs-webgl.buffers/draw! gl)))))
 

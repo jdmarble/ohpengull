@@ -1,4 +1,4 @@
-(ns ohpengull.load
+(ns ohpengull.programs
   (:require
     [ohpengull.schema.webgl :as webgl]
     [ohpengull.schema.gltf :as gltf]
@@ -7,7 +7,7 @@
     [cljs-webgl.shaders :as shaders]
     [ohpengull.util :as util]))
 
-(defnk load-shaders :- {s/Str webgl/Shader}
+(defnk compile-shaders :- {s/Str webgl/Shader}
   [gl :- webgl/Context
    shader-sources :- {s/Str s/Str}
    [:gltf shaders] :- gltf/Root]
@@ -18,7 +18,7 @@
                              (:type shader-desc)
                              (get shader-sources (:uri shader-desc))))))
 
-(defnk load-programs :- {s/Str {:program webgl/Program
+(defnk link-programs :- {s/Str {:program webgl/Program
                                 :attribute-locations {s/Str s/Int}}}
   [gl :- webgl/Context
    shaders :- {s/Str webgl/Shader}
