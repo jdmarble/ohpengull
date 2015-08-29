@@ -1,8 +1,7 @@
 (ns ohpengull.test
   (:require [cljs.test :refer-macros [run-all-tests]]
             [schema.core]
-            [ohpengull.draw-test]
-            [ohpengull.util-test]))
+            [ohpengull.draw-test]))
 
 (defn ^:export run []
   (enable-console-print!)

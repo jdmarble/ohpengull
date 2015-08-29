@@ -12,9 +12,9 @@
 (defnk create-buffer-views :- {s/Str c/TypedArray}
   [gl :- webgl/Context
    buffers :- {s/Str s/Any}
-   [:gltf buffer-views] :- gltf/Root]
+   [:gltf bufferViews] :- gltf/Root]
   (util/map-vals
-    buffer-views
+    bufferViews
     (fnk [buffer byteOffset byteLength target]
       (buffers/create-buffer
         gl

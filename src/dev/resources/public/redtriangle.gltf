@@ -1,0 +1,130 @@
+{
+  "accessors": {
+    "redtriangle-position": {
+      "bufferView": "redtriangle-array",
+      "byteOffset": 0,
+      "byteStride": 0,
+      "componentType": 5120,
+      "count": 3,
+      "type": "VEC3"
+    },
+    "redtriangle-indices": {
+      "bufferView": "redtriangle-element-array",
+      "byteOffset": 0,
+      "byteStride": 0,
+      "componentType": 5121,
+      "count": 3,
+      "type": "SCALAR"
+    }
+  },
+  "bufferViews": {
+    "redtriangle-array": {
+      "buffer": "redtriangle-buffer",
+      "byteLength": 9,
+      "byteOffset": 0,
+      "target": 34962
+    },
+    "redtriangle-element-array": {
+      "buffer": "redtriangle-buffer",
+      "byteLength": 3,
+      "byteOffset": 9,
+      "target": 34963
+    }
+  },
+  "buffers": {
+    "redtriangle-buffer": {
+      "byteLength": 12,
+      "type": "arraybuffer",
+      "uri": "redtriangle.bin"
+    }
+  },
+  "materials": {
+    "redtriangle-material": {
+      "instanceTechnique": {
+        "technique": "redtriangle-technique",
+        "values": {}
+      },
+      "name": "Red Triangle Material"
+    }
+  },
+  "meshes": {
+    "redtriangle-mesh": {
+      "name": "Red Triangle Mesh",
+      "primitives": [
+        {
+          "attributes": {
+            "POSITION": "redtriangle-position"
+          },
+          "indices": "redtriangle-indices",
+          "material": "redtriangle-material",
+          "mode": 4
+        }
+      ]
+    }
+  },
+  "nodes": {
+    "redtriangle-node": {
+      "children": [],
+      "matrix": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ],
+      "meshes": [
+        "redtriangle-mesh"
+      ],
+      "name": "Red Triangle"
+    }
+  },
+  "programs": {
+    "redtriangle-program": {
+      "attributes": [
+        "vertex_position"
+      ],
+      "fragmentShader": "redtriangle-fragment-shader",
+      "vertexShader": "redtriangle-vertex-shader"
+    }
+  },
+  "scene": "redtriangle-scene",
+  "scenes": {
+    "redtriangle-scene": {
+      "nodes": [
+        "redtriangle-node"
+      ]
+    }
+  },
+  "shaders": {
+    "redtriangle-fragment-shader": {
+      "type": 35632,
+      "uri": "redtriangle-FS.glsl"
+    },
+    "redtriangle-vertex-shader": {
+      "type": 35633,
+      "uri": "redtriangle-VS.glsl"
+    }
+  },
+  "techniques": {
+    "redtriangle-technique": {
+      "parameters": {
+        "position": {
+          "semantic": "POSITION",
+          "type": 35665
+        }
+      },
+      "pass": "redtriangle-pass",
+      "passes": {
+        "redtriangle-pass": {
+          "instanceProgram": {
+            "attributes": {
+              "vertex_position": "position"
+            },
+            "program": "redtriangle-program",
+            "uniforms": {}
+          },
+          "states": {}
+        }
+      }
+    }
+  }
+}

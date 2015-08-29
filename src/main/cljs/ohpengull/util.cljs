@@ -1,5 +1,4 @@
-(ns ohpengull.util
-  (:require [com.rpl.specter :as specter :refer [ALL]]))
+(ns ohpengull.util)
 
 (defn mapply [f & args]
   "Pass a map to a function as keyword arguments.
@@ -32,8 +31,3 @@
   From http://stackoverflow.com/a/3249777/336925"
   [seq v]
   (some #(= v %) seq))
-
-(defn inline-in
-  [dest-selector source-selector structure]
-  (let [source (specter/select-one source-selector structure)]
-    (specter/transform dest-selector #(get source %) structure)))

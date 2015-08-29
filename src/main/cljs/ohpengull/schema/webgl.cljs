@@ -43,3 +43,17 @@
 
 (def Shader
   s/Any)
+
+(def DrawCall
+  {:shader Program
+   :draw-mode DrawMode
+   :count s/Int
+
+   :attributes [{:buffer Buffer
+                 :location s/Int
+                 :components-per-vertex s/Int
+                 :type DataType}]
+
+   (s/optional-key :element-array) {:buffer Buffer
+                                    :type DataType
+                                    :offset s/Int}})

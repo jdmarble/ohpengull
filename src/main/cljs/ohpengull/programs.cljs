@@ -1,11 +1,23 @@
 (ns ohpengull.programs
+  (:require-macros
+    [cljs.core.async.macros :refer [go]])
   (:require
+    [cljs.core.async :refer [<!]]
+    [cljs-http.client :as http]
     [ohpengull.schema.webgl :as webgl]
     [ohpengull.schema.gltf :as gltf]
     [schema.core :as s :include-macros true]
-    [plumbing.core :refer-macros (defnk)]
+    [plumbing.core :refer-macros (defnk for-map)]
     [cljs-webgl.shaders :as shaders]
     [ohpengull.util :as util]))
+
+(defnk get-shader-sources :- {s/Str s/Str}
+  [[:gltf shaders]]
+  (go
+    (for-map [{:keys [uri]} (vals shaders)]
+      uri
+      ; TODO: error handling
+      (:body (<! (http/get uri))))))
 
 (defnk compile-shaders :- {s/Str webgl/Shader}
   [gl :- webgl/Context
@@ -27,8 +39,8 @@
     programs
     (fn [program-desc]
       (let [program (shaders/create-program gl
-                                            (get shaders (:vertex-shader program-desc))
-                                            (get shaders (:fragment-shader program-desc)))]
+                                            (get shaders (:vertexShader program-desc))
+                                            (get shaders (:fragmentShader program-desc)))]
         {:program program
          :attribute-locations
          (into {} (for [attrib (:attributes program-desc)]

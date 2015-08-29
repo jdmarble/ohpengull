@@ -5,11 +5,12 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.7.0"]
-                 [org.clojure/clojurescript "1.7.48"]
-                 [com.rpl/specter "0.6.2"]
+                 [org.clojure/clojurescript "0.0-3165"]
+                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [prismatic/plumbing "0.4.4"]
-                 [prismatic/schema "0.4.3"]
-                 [cljs-webgl "0.1.5-SNAPSHOT"]]
+                 [prismatic/schema "0.4.4"]
+                 [cljs-webgl "0.1.5-SNAPSHOT"]
+                 [cljs-http "0.1.37"]]
 
   :plugins [[lein-cljsbuild "1.0.6"]]
 
