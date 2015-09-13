@@ -3,8 +3,8 @@
     [cljs.core.async.macros :refer [go]])
   (:require
     [cljs.core.async :refer [<!]]
-    [cljs-http.client :as http]
-    [schema.core :as s :include-macros true]
+    [ohpengull.util :refer [http-get]]
+    [schema.core :include-macros true]
     [ohpengull.schema.common :as c]
     [plumbing.core :refer-macros (defnk)]
     [ohpengull.buffers]
@@ -16,14 +16,14 @@
   [gltf-uri :- c/Uri]
   (go
     (-> gltf-uri
-        http/get
+        http-get
         <!
-        :body
         gltf/json->edn)))
 
 (def default-renderer
   "A graph specifying a computation that outputs a sequence of WebGL draw calls."
   {:gltf load-gltf
+   :buffers ohpengull.buffers/get-buffers
    :bufferViews ohpengull.buffers/create-buffer-views
    :shaders ohpengull.programs/compile-shaders
    :shader-sources ohpengull.programs/get-shader-sources

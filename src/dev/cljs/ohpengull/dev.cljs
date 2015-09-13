@@ -1,5 +1,8 @@
 (ns ohpengull.dev
+  (:require-macros
+    [cljs.core.async.macros :refer [go]])
   (:require
+    [cljs.core.async :refer [<!]]
     [cljs-webgl.context :as context]
     [cljs-webgl.typed-arrays :as ta]
     [ohpengull.core]
@@ -9,15 +12,13 @@
 
 (defn my-params []
   {:gl (context/get-context (.getElementById js/document "canvas"))
-   :buffers {"redtriangle-buffer" (.-buffer (ta/int8 [1 1 0
-                                                      -1 1 0
-                                                      1 -1 0
-                                                      0 1 2]))}
    :gltf-uri "redtriangle.gltf"})
 
 (defn my-render []
-  (let [calc (graph-async/async-compile ohpengull.core/default-renderer)]
-    (calc (my-params))))
+  (go
+    (let [calc (graph-async/async-compile ohpengull.core/default-renderer)
+          result (<! (calc (my-params)))]
+      (js/console.log "calc result -> " (pr-str result)))))
 
 (fw/start {:on-jsload my-render})
 

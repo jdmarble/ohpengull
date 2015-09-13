@@ -3,27 +3,26 @@
     [cljs.core.async.macros :refer [go]])
   (:require
     [cljs.core.async :refer [<!]]
-    [cljs-http.client :as http]
+    [ohpengull.util :refer [http-get]]
     [ohpengull.schema.webgl :as webgl]
     [ohpengull.schema.gltf :as gltf]
     [schema.core :as s :include-macros true]
-    [plumbing.core :refer-macros (defnk for-map)]
-    [cljs-webgl.shaders :as shaders]
-    [ohpengull.util :as util]))
+    [plumbing.core :refer [map-vals] :refer-macros (defnk for-map)]
+    [cljs-webgl.shaders :as shaders]))
 
 (defnk get-shader-sources :- {s/Str s/Str}
-  [[:gltf shaders]]
+  [[:gltf shaders] :- gltf/Root]
   (go
     (for-map [{:keys [uri]} (vals shaders)]
       uri
       ; TODO: error handling
-      (:body (<! (http/get uri))))))
+      (:body (<! (http-get uri))))))
 
 (defnk compile-shaders :- {s/Str webgl/Shader}
   [gl :- webgl/Context
    shader-sources :- {s/Str s/Str}
    [:gltf shaders] :- gltf/Root]
-  (util/map-vals
+  (map-vals
     shaders
     (fn [shader-desc]
       (shaders/create-shader gl
@@ -35,7 +34,7 @@
   [gl :- webgl/Context
    shaders :- {s/Str webgl/Shader}
    [:gltf programs] :- gltf/Root]
-  (util/map-vals
+  (map-vals
     programs
     (fn [program-desc]
       (let [program (shaders/create-program gl
