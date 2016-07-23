@@ -1,6 +1,9 @@
 ohpengull
 =========
 
+> What a classy bird.
+> - Wickerbottom
+
 Declarative WebGL that uses glTF like a virtual DOM.
 
 Copyright and License
